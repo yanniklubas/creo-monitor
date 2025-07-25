@@ -36,7 +36,7 @@ impl Monitor {
             match container
                 .collector()
                 .refresh_stats()
-                .map(|stats| ContainerStatsEntry::new(timestamp, *container_id, stats))
+                .map(|stats| ContainerStatsEntry::new(timestamp, container_id.clone(), stats))
             {
                 Ok(metric) => {
                     out.push(metric);

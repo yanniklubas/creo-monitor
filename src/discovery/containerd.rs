@@ -171,7 +171,7 @@ async fn add_container_task(
                             ]);
 
                             monitor.register_container(
-                                container_task.id,
+                                container_task.id.clone(),
                                 MonitoredContainer::new(
                                     container_task.id,
                                     vec![container_task.pid],
@@ -300,7 +300,7 @@ async fn existing_containers_task(
                 let mut tasks = HashMap::with_capacity(containers.len());
                 let mut metadata = Vec::with_capacity(containers.len());
                 for container in containers {
-                    let c_id = match ContainerID::from_str(&container.id) {
+                    let c_id = match ContainerID::new(&container.id) {
                         Ok(id) => id,
                         Err(err) => {
                             log::error!("failed to parse ContainerID: {}", err);
@@ -320,17 +320,14 @@ async fn existing_containers_task(
                         Ok(response) => match response.into_inner().process {
                             Some(task) => task,
                             None => {
-                                log::warn!(
-                                    "Received empty task for containerID `{}`",
-                                    c_id.as_str()
-                                );
+                                log::warn!("Received empty task for containerID `{}`", c_id);
                                 continue;
                             }
                         },
                         Err(err) => {
                             log::warn!(
                                 "failed to request task details for containerID `{}`: {}",
-                                c_id.as_str(),
+                                c_id,
                                 err
                             );
                             continue;
@@ -340,7 +337,7 @@ async fn existing_containers_task(
                         continue;
                     }
 
-                    tasks.insert(c_id, task.pid);
+                    tasks.insert(c_id.clone(), task.pid);
                     metadata.push((c_id, container.labels));
                 }
                 log::debug!("Found {} running containers", metadata.len());
@@ -417,7 +414,7 @@ async fn events_task(
             Some(ref event) => match decode_event(event) {
                 Ok(ev) => match ev {
                     Event::ContainerUpdate(container_update) => {
-                        match ContainerID::from_str(&container_update.id) {
+                        match ContainerID::new(&container_update.id) {
                             Ok(c_id) => {
                                 log::debug!(
                                     "Received new labels for container `{}`: {:?}",
@@ -438,7 +435,7 @@ async fn events_task(
                         }
                     }
                     Event::TaskStart(task_start) => {
-                        match ContainerID::from_str(task_start.container_id.as_str()) {
+                        match ContainerID::new(task_start.container_id.as_str()) {
                             Ok(id) => {
                                 log::debug!(
                                     "Found new container with id `{}` and pid `{}`",
@@ -459,7 +456,7 @@ async fn events_task(
                                     Ok(response) => {
                                         if let Some(container) = response.into_inner().container {
                                             metadata_tx
-                                                .send((id, container.labels))
+                                                .send((id.clone(), container.labels))
                                                 .await
                                                 .expect("Reader side to still exist");
                                         }
@@ -498,7 +495,7 @@ async fn events_task(
                         // and as we only track the root tasks for each container, we have to stop
                         // tracking the container.
                         if task_delete.id.is_empty() {
-                            match ContainerID::from_str(task_delete.container_id.as_str()) {
+                            match ContainerID::new(task_delete.container_id.as_str()) {
                                 Ok(ref container_id) => {
                                     log::debug!(
                                         "Deleting container with container_id `{}` and pid `{}`",

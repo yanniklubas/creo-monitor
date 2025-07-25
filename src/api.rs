@@ -117,8 +117,10 @@ impl DB {
             HashMap::default();
 
         for stat in stats {
-            let id =
-                models::ContainerIdentifier::new(stat.container_id.into(), stat.machine_id.into());
+            let id = models::ContainerIdentifier::new(
+                stat.container_id.to_arc(),
+                stat.machine_id.into(),
+            );
 
             out.entry(id).or_default().push(stat.into());
         }
@@ -152,8 +154,10 @@ ORDER BY container_id, machine_id
             HashMap::default();
 
         for meta in metadata {
-            let id =
-                models::ContainerIdentifier::new(meta.container_id.into(), meta.machine_id.into());
+            let id = models::ContainerIdentifier::new(
+                meta.container_id.to_arc(),
+                meta.machine_id.into(),
+            );
 
             out.entry(id)
                 .or_insert_with(|| models::ContainerMetadata {

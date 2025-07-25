@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::persistence;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct ContainerIdentifier {
-    pub container_id: String,
+    pub container_id: Arc<str>,
     pub machine_id: String,
 }
 
@@ -19,7 +20,7 @@ impl serde::Serialize for ContainerIdentifier {
 }
 
 impl ContainerIdentifier {
-    pub fn new(container_id: String, machine_id: String) -> Self {
+    pub fn new(container_id: Arc<str>, machine_id: String) -> Self {
         Self {
             container_id,
             machine_id,

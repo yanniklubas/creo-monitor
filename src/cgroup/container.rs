@@ -24,7 +24,7 @@ impl MonitoredContainer {
     /// ```
     /// # use creo_monitor::container::ContainerID;
     /// # use creo_monitor::cgroup::{MonitoredContainer, CollectorBuilder};
-    /// let id = ContainerID::new(*b"abc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abcd").unwrap();
+    /// let id = ContainerID::new("abc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abcd").unwrap();
     /// let pids = vec![1234, 5678];
     /// let monitor = CollectorBuilder::default().build();
     /// let slice = MonitoredContainer::new(id, pids, monitor);

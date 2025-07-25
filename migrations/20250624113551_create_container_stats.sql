@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS container_stats (
     timestamp  BIGINT UNSIGNED NOT NULL,
-    container_id BINARY(64) NOT NULL,
+    container_id VARCHAR(255) NOT NULL,
     machine_id BINARY(16) NOT NULL,
     cpu_usage_usec BIGINT UNSIGNED,
     cpu_user_usec BIGINT UNSIGNED,

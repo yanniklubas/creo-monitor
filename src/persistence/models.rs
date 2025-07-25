@@ -1,3 +1,5 @@
+use std::{borrow::Borrow, sync::Arc};
+
 use sqlx::{
     Decode, Type,
     error::BoxDynError,
@@ -52,44 +54,49 @@ impl<'r> Decode<'r, MySql> for MachineID {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ContainerID(pub [u8; 64]);
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContainerID(pub Arc<str>);
 
 impl ContainerID {
-    pub fn as_slice(&self) -> &[u8] {
-        self.0.as_slice()
+    pub fn to_arc(&self) -> Arc<str> {
+        Arc::clone(&self.0)
     }
 }
 
-impl From<ContainerID> for String {
-    fn from(value: ContainerID) -> Self {
-        String::from_utf8_lossy(value.as_slice()).to_string()
-    }
-}
-
-impl From<container::ContainerID> for ContainerID {
-    fn from(value: container::ContainerID) -> Self {
-        Self(value.as_raw())
-    }
-}
-
-impl Type<MySql> for ContainerID {
-    fn type_info() -> MySqlTypeInfo {
-        <&[u8] as Type<MySql>>::type_info()
-    }
-
-    fn compatible(ty: &MySqlTypeInfo) -> bool {
-        <Vec<u8> as Type<MySql>>::compatible(ty)
+impl sqlx::Type<MySql> for ContainerID {
+    fn type_info() -> <MySql as sqlx::Database>::TypeInfo {
+        <&str as Type<MySql>>::type_info()
     }
 }
 
 impl<'r> Decode<'r, MySql> for ContainerID {
     fn decode(value: MySqlValueRef<'r>) -> Result<Self, BoxDynError> {
-        let slice = <&'r [u8] as Decode<MySql>>::decode(value)?;
-        let id_bytes: [u8; 64] = slice
-            .try_into()
-            .map_err(|_| "Invalid length for MachineId")?;
-        Ok(ContainerID(id_bytes))
+        let raw = <&str as Decode<MySql>>::decode(value)?;
+
+        Ok(Self(Arc::from(raw)))
+    }
+}
+
+impl From<container::ContainerID> for ContainerID {
+    fn from(value: container::ContainerID) -> Self {
+        Self(value.to_arc())
+    }
+}
+impl From<&container::ContainerID> for ContainerID {
+    fn from(value: &container::ContainerID) -> Self {
+        Self(value.to_arc())
+    }
+}
+
+impl AsRef<str> for ContainerID {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Borrow<str> for ContainerID {
+    fn borrow(&self) -> &str {
+        &self.0
     }
 }
 
@@ -134,7 +141,7 @@ impl ContainerStats {
     ) -> sqlx::query::Query<'q, sqlx::MySql, sqlx::mysql::MySqlArguments> {
         query
             .bind(self.timestamp)
-            .bind(self.container_id.as_slice())
+            .bind(self.container_id.as_ref())
             .bind(self.machine_id.as_slice())
             .bind(self.cpu_usage_usec)
             .bind(self.cpu_user_usec)

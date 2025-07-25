@@ -118,11 +118,11 @@ ON DUPLICATE KEY UPDATE
         let mut tx: sqlx::Transaction<'_, sqlx::MySql> =
             self.db.begin().await.map_err(Error::InsertError)?;
 
+        let c_id: super::models::ContainerID = container_id.into();
         for (key, value) in labels {
             let query = sqlx::query(INSERT_QUERY);
-            let c_id: super::models::ContainerID = container_id.into();
             let query = query
-                .bind(c_id.as_slice())
+                .bind(c_id.as_ref())
                 .bind(self.machine_id.as_slice())
                 .bind(&self.hostname)
                 .bind(key)

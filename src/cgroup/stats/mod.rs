@@ -60,8 +60,8 @@ impl ContainerStatsEntry {
         self.timestamp
     }
 
-    pub fn container_id(&self) -> ContainerID {
-        self.container_id
+    pub fn container_id(&self) -> &ContainerID {
+        &self.container_id
     }
 
     pub fn stats(&self) -> &CgroupStats {
